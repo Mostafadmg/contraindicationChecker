@@ -1,0 +1,442 @@
+/* EveryDayMeds SCR Pre-Screen — results page */
+
+:root {
+  --bg: #0f1419;
+  --panel: #1a2332;
+  --panel-border: #2d3a4d;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --teal: #2dd4bf;
+  --critical: #ef4444;
+  --critical-bg: rgba(239, 68, 68, 0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --info: #3b82f6;
+  --info-bg: rgba(59, 130, 246, 0.12);
+  --font-heading: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  margin: 0 0 12px;
+}
+
+h1 { font-size: 1.75rem; color: var(--teal); }
+h2 { font-size: 1.25rem; }
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.header__subtitle {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar input[type="search"] {
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  min-width: 180px;
+}
+
+.toolbar button {
+  padding: 8px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.toolbar button:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+.patient-band {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.overall-result {
+  margin-bottom: 20px;
+}
+
+.overall-result__inner {
+  border-radius: 10px;
+  padding: 20px 24px;
+  border: 2px solid var(--panel-border);
+}
+
+.overall-result__inner--pass {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: #22c55e;
+}
+
+.overall-result__inner--fail {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: var(--critical);
+}
+
+.overall-result__status {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.overall-result__status p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.overall-result__badge {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  padding: 8px 14px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.overall-result__inner--pass .overall-result__badge {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.overall-result__inner--fail .overall-result__badge {
+  background: var(--critical);
+  color: #fff;
+}
+
+.severity-pill--pass {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.severity-pill--fail {
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+
+.finding-card--pass {
+  border-left: 4px solid #22c55e;
+}
+
+.finding-card--fail {
+  border-left: 4px solid var(--critical);
+}
+
+.hit-count {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.rule-hit {
+  padding: 10px 0;
+  border-top: 1px solid var(--panel-border);
+}
+
+.rule-hit:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.is-filtered-out {
+  display: none !important;
+}
+
+.patient-band__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.patient-band__item label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.patient-band__meta {
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.btn-copy {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--teal);
+  cursor: pointer;
+}
+
+.findings-section {
+  margin-bottom: 28px;
+}
+
+.findings-section--critical h2 { color: var(--critical); }
+.findings-section--warning h2 { color: var(--warning); }
+.findings-section--info h2 { color: var(--info); }
+
+.findings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-state {
+  padding: 16px;
+  border-radius: 8px;
+  background: var(--panel);
+  border: 1px dashed var(--panel-border);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.finding-card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.finding-card--critical { border-left: 4px solid var(--critical); }
+.finding-card--warning { border-left: 4px solid var(--warning); }
+.finding-card--info { border-left: 4px solid var(--info); }
+
+.finding-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.finding-card__header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.finding-card__body {
+  padding: 0 16px 16px;
+  display: none;
+}
+
+.finding-card.is-expanded .finding-card__body {
+  display: block;
+}
+
+.finding-card.is-filtered-out {
+  display: none;
+}
+
+.severity-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.severity-pill--critical {
+  background: var(--critical-bg);
+  color: var(--critical);
+}
+
+.severity-pill--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.severity-pill--info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.category-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.finding-card__meta {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.finding-card__excerpt {
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  margin-bottom: 10px;
+  word-break: break-word;
+}
+
+.finding-card__guidance {
+  margin-bottom: 10px;
+}
+
+.finding-card__action {
+  padding: 10px 12px;
+  background: rgba(45, 212, 191, 0.1);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 4px 4px 0;
+  font-weight: 500;
+}
+
+.key-data-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.key-data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.key-data-item label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.key-data-item .value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--teal);
+}
+
+.key-data-item .date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.medications-list h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.medications-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.medications-list li {
+  margin-bottom: 4px;
+}
+
+.medications-list .med-date {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.disclaimer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #0a0e12;
+  border-top: 1px solid var(--panel-border);
+  padding: 12px 20px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.disclaimer p {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.loading, .error-state {
+  color: var(--text-muted);
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+  .page { max-width: 100%; padding: 0; }
+  .finding-card__body { display: block !important; }
+  .disclaimer {
+    position: static;
+    background: #f5f5f5;
+    color: #333;
+    margin-top: 24px;
+  }
+  .finding-card, .patient-band, .key-data-panel {
+    break-inside: avoid;
+    border-color: #ccc;
+  }
+}
+
+@media (max-width: 600px) {
+  .header { flex-direction: column; }
+  .toolbar { width: 100%; }
+  .toolbar input[type="search"] { flex: 1; min-width: 0; }
+}

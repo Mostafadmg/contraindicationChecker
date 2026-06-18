@@ -1,0 +1,74 @@
+{
+
+  "manifest_version": 3,
+
+  "name": "EveryDayMeds SCR Pre-Screen",
+
+  "version": "2.0.5",
+
+  "description": "Automates NHS SCR navigation and presents a clinical pre-screen summary for prescribers.",
+
+  "permissions": ["storage", "tabs", "webNavigation"],
+
+  "host_permissions": [
+
+    "https://rx.everydaymeds.co.uk/*",
+
+    "https://portal.spineservices.nhs.uk/*"
+
+  ],
+
+  "background": {
+
+    "service_worker": "src/background.js",
+
+    "type": "module"
+
+  },
+
+  "content_scripts": [
+
+    {
+
+      "all_frames": true,
+
+      "js": ["config.js", "main-page.js", "automate-scr.js"],
+
+      "matches": ["https://rx.everydaymeds.co.uk/*"],
+
+      "run_at": "document_end"
+
+    },
+
+    {
+
+      "all_frames": true,
+
+      "js": ["config.js", "automate-scr.js"],
+
+      "matches": ["https://portal.spineservices.nhs.uk/nationalcarerecordsservice/*"]
+
+    }
+
+  ],
+
+  "web_accessible_resources": [
+
+    {
+
+      "resources": ["compiled/*", "src/ui/*", "src/config/medexpress.rules.json"],
+
+      "matches": ["<all_urls>"]
+
+    }
+
+  ],
+
+  "action": {
+
+    "default_title": "EveryDayMeds SCR Pre-Screen"
+
+  }
+
+}
+

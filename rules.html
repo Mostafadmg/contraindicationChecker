@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EveryDayMeds SCR — Rules &amp; Logic Reference</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --teal: #2dd4bf;
+      --pass: #22c55e;
+      --fail: #ef4444;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+    h1 { color: var(--teal); font-size: 1.75rem; margin: 0 0 8px; }
+    h2 { font-size: 1.25rem; margin: 32px 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--teal); }
+    p, li { color: var(--text); }
+    .subtitle { color: var(--muted); margin-bottom: 24px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 12px 0;
+    }
+    .flow { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .step {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      flex: 1 1 140px;
+      font-size: 0.9rem;
+    }
+    .step strong { display: block; color: var(--teal); margin-bottom: 4px; }
+    code, .file {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.88em;
+      color: #7dd3fc;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.92rem; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #111827; color: var(--teal); }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill-fail { background: rgba(239, 68, 68, 0.15); color: var(--fail); }
+    .pill-pass { background: rgba(34, 197, 94, 0.15); color: var(--pass); }
+    .keywords { columns: 2; gap: 16px; }
+    @media (max-width: 640px) { .keywords { columns: 1; } }
+    .keywords li { break-inside: avoid; margin: 2px 0; }
+    details { margin: 10px 0; }
+    summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+    .logic-box {
+      border-left: 3px solid var(--teal);
+      padding-left: 14px;
+      margin: 12px 0;
+      color: var(--muted);
+    }
+    .warn { color: var(--warn); }
+    pre {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      padding: 14px;
+      border-radius: 6px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>EveryDayMeds SCR Pre-Screen</h1>
+<p class="subtitle">
+  Complete reference — what data is read, what is searched, and how PASS/FAIL works.<br>
+  Extension v2.0.x · Based on MedExpress keyword rules (R001–R006)
+</p>
+
+<h2>End-to-end flow</h2>
+<div class="flow">
+  <div class="step"><strong>1. Order page</strong>Scrape name, DOB, sex from Rx order DOM</div>
+  <div class="step"><strong>2. NHS portal</strong>Auto search → patient → Clinical tab → SCR HTML</div>
+  <div class="step"><strong>3. Keyword scan</strong>Search entire SCR text for rule keywords</div>
+  <div class="step"><strong>4. BMI extract</strong>Latest weight / height / BMI from observations table</div>
+  <div class="step"><strong>5. Results tab</strong>Show PASS/FAIL per rule + vitals</div>
+</div>
+
+<h2>Phase 1 — Order page (before NHS)</h2>
+<p>When you click <strong>Go to NHS SCR</strong>, the extension reads from the EveryDayMeds order page only — not from the SCR yet.</p>
+<table>
+  <tr><th>Field</th><th>DOM selector</th><th>Used for</th></tr>
+  <tr><td>First name</td><td><code>.patient-name-text</code> (first word)</td><td>NHS Advanced search</td></tr>
+  <tr><td>Last name</td><td><code>.patient-name-text</code> (remaining words)</td><td>NHS Advanced search</td></tr>
+  <tr>
+    <td>Date of birth</td>
+    <td><code>.meta-val-text[data-meta="dob"]</code> or <code>button[data-edit-field="dob"]</code> → <code>data-edit-current</code></td>
+    <td>NHS Advanced search (DD/MM/YYYY)</td>
+  </tr>
+  <tr><td>Gender</td><td><code>.od2-vitals-grid</code> → row labelled “Sex”</td><td>NHS gender radio (male / female / All if unknown)</td></tr>
+</table>
+<p><strong>File to customise:</strong> <span class="file">main-page.js</span></p>
+
+<h2>Phase 2 — NHS portal automation</h2>
+<p>This navigates the NHS site; it does <em>not</em> parse clinical content until the Clinical tab loads.</p>
+<ol>
+  <li>Confirm Smartcard org (EveryDayMeds / FJE59)</li>
+  <li>Advanced search: gender + first name + surname + single DOB → Find patient</li>
+  <li>Click matching search result row</li>
+  <li>Click <strong>Clinical</strong> tab</li>
+  <li>Click consent <strong>Yes</strong> if modal appears</li>
+  <li>Extract SCR HTML from clinical page</li>
+</ol>
+<p><strong>SCR HTML captured from</strong> (first match):</p>
+<ul>
+  <li><code>.scr-print-wrapper</code> innerHTML, or</li>
+  <li><code>.clinicals-page</code> (if it contains SCR tables/sections), or</li>
+  <li>Area around <code>table.scr-table</code> / “General Practice Summary”</li>
+</ul>
+<p><strong>File:</strong> <span class="file">automate-scr.js</span></p>
+
+<h2>Phase 3 — Keyword scan logic</h2>
+<div class="card">
+  <h3 style="margin-top:0">How matching works</h3>
+  <div class="logic-box">
+    <p>
+      1. SCR HTML → flatten to one long text string (all tags stripped, spaces normalised)<br>
+      2. For each rule where <code>fail_if_found: true</code>, check every keyword<br>
+      3. Match is <strong>case-insensitive substring</strong> (e.g. “depress” matches “depression”)<br>
+      4. Keywords with <code>*</code> use wildcard regex (<code>*</code> → any non-whitespace)<br>
+      5. Every match = one <strong>FINDING</strong> with a text snippet ±50 chars<br>
+      6. Rule <span class="pill pill-fail">FAIL</span> if any keyword hits · Rule <span class="pill pill-pass">PASS</span> if zero hits<br>
+      7. Overall <span class="pill pill-pass">PASS</span> only if <em>all</em> rules pass (zero findings total)
+    </p>
+  </div>
+  <p><strong>Files to customise rules:</strong></p>
+  <ul>
+    <li><span class="file">src/config/medexpress.rules.json</span> — add/remove keywords, rules, categories</li>
+    <li><span class="file">src/engine/medexpressKeywordEngine.js</span> — matching algorithm (rarely need to change)</li>
+  </ul>
+</div>
+
+<h2>Phase 4 — BMI &amp; vitals extraction</h2>
+<p>Separate from keyword rules. Parses the SCR section <strong>“Clinical Observations and Findings”</strong>.</p>
+<table>
+  <tr><th>Metric</th><th>Row labels matched (case-insensitive)</th><th>Output</th></tr>
+  <tr><td>Weight</td><td>“body weight”, “o / e - weight”, or “weight”</td><td>Latest by date → kg + date</td></tr>
+  <tr><td>Height</td><td>“standing height”, “o / e - height”, or “height”</td><td>Latest by date → value + date</td></tr>
+  <tr><td>BMI</td><td>“body mass index”</td><td>Latest by date → kg/m² + date</td></tr>
+</table>
+<p>Values read from <code>table.scr-table</code> in that section. Multi-line rows use a spacer row + <code>.scr-supporting-inset</code> for the value.</p>
+<p><strong>File:</strong> <span class="file">src/engine/bmiExtractor.js</span></p>
+<p class="warn"><strong>Note:</strong> Height is stored as the numeric value from SCR (e.g. 1.68 may display as “1.68 cm” — unit labelling in results is cosmetic).</p>
+
+<h2>Phase 5 — Results page display</h2>
+<p>Opens <strong>MedExpress keyword tool</strong> (<span class="file">keywords-tool.html</span> + <span class="file">compiled/keywords-tool.js</span>) — same React UI as MedExpress SCR extension.</p>
+<p>SCR HTML is sent via <code>renderSCRContent</code> message after the tab loads. Patient header uses order-page <code>userData</code>.</p>
+<p><strong>Custom EDM UI (optional):</strong> <span class="file">src/ui/result.html</span> — not used by default; customise MedExpress tool or fork <span class="file">compiled/</span> when ready.</p>
+
+<h2>Clinical keyword rules (R001–R006)</h2>
+<p>All rules use <code>fail_if_found: true</code> — finding any keyword below flags that rule as FAIL.</p>
+
+<details open>
+  <summary><span class="pill pill-fail">R001</span> Pancreatitis · condition · 10 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>Pancreatitis</li><li>Gallstone</li><li>Cholecyst</li><li>Gallbladder removal</li>
+    <li>Liver transplant</li><li>calculus</li><li>calculi</li><li>Bile acid malabsorption</li>
+    <li>Hepatic fibrosis</li><li>Hepatitis</li>
+  </ul></div>
+</details>
+
+<details open>
+  <summary><span class="pill pill-fail">R002</span> Eating disorders · condition · 5 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>Anorexia</li><li>Bulimia</li><li>Eating disorder</li><li>Binge</li>
+    <li>Avoidant restrictive food intake disorder</li>
+  </ul></div>
+</details>
+
+<details open>
+  <summary><span class="pill pill-fail">R003</span> Insulin · medication · 25 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>Insulin</li><li>NovoRapid</li><li>Humalog</li><li>Actrapid</li><li>Humulin</li>
+    <li>Insulatard</li><li>Lantus</li><li>Abasaglar</li><li>Levemir</li><li>Tresiba</li>
+    <li>NovoMix</li><li>Aspart</li><li>Lispro</li><li>Isophane</li><li>Glargine</li>
+    <li>Detemir</li><li>Degludec</li><li>Kwikpen</li><li>Flexpen</li><li>SoloStar</li>
+    <li>NovoPen</li><li>FlexTouch</li><li>Toujeo</li><li>Fiasp</li><li>Lyumjev</li>
+  </ul></div>
+</details>
+
+<details open>
+  <summary><span class="pill pill-fail">R004</span> Retinopathy · condition · 4 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>retin</li><li>retinopathy</li><li>Retinal Round hole</li><li>Macul</li>
+  </ul>
+  <p class="warn">“retin” and “Macul” are short substrings — may match unrelated words (e.g. “Macular degeneration”).</p></div>
+</details>
+
+<details open>
+  <summary><span class="pill pill-fail">R005</span> Other · condition · 133 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>Addison</li><li>Cushing</li><li>Graves</li><li>Ulcerative Colitis</li><li>Crohn</li>
+    <li>Congenital Adrenal Hyperplasia</li><li>Cirrhosis</li>
+    <li>Chronic Kidney Disease stage 4</li><li>Chronic Kidney Disease, stage 4</li>
+    <li>Chronic Kidney Disease stage 5</li><li>Chronic Kidney Disease, stage 5</li>
+    <li>Heart Failure</li><li>Gastroparesis</li><li>Alcohol dependence</li><li>Alcohol abuse</li>
+    <li>Suicid</li><li>Acromegaly</li><li>Overactive thyroid</li><li>Growth Hormone Disorder</li>
+    <li>Dementia</li><li>Bariatric</li><li>Sleeve gastrectomy</li><li>gastric sleeve</li>
+    <li>Gastric bypass</li><li>Roux-en-Y</li><li>Gastric balloon</li><li>Endoscopic sleeve gastroplasty</li>
+    <li>Biliopancreatic diversion</li><li>duodenal bypass</li><li>cancer</li><li>pregn</li>
+    <li>chronic malabsorption</li><li>anxiety</li><li>depress</li><li>Cholelithiasis</li>
+    <li>Malignant</li><li>Cognitive impairment</li><li>Lymphoma</li><li>Medullary</li>
+    <li>Neoplas</li><li>Thyroid</li><li>Leukaemia</li><li>ostomy</li><li>sickle cell</li>
+    <li>pancreatic insufficiency</li><li>Long QT syndrome</li><li>End stage liver disease</li>
+    <li>Hypoglycaemia</li><li>Non arteritic ischaemic optic neuropathy</li><li>colectomy</li>
+    <li>Adrenal</li><li>Overdose</li><li>Intention Harm</li><li>Sarcoma</li><li>Phyllodes</li>
+    <li>Pituitar</li><li>Prolactin</li><li>Rheumatoid</li><li>Rheum</li><li>Lupus</li>
+    <li>Multiple Sclerosis</li><li>Seropositive</li><li>Seronegative</li>
+    <li>Autoimmune connective tissue</li><li>Gastric band</li><li>Atrial fibrillation</li>
+    <li>AFib</li><li>Supraventricular Tachycardia</li><li>SVT</li><li>Heart Block</li>
+    <li>Atrioventricular Block</li><li>Pacemaker</li><li>Defibrillator</li><li>Cardiomyopathy</li>
+    <li>myopathy</li><li>Postural Orthostatic Tachycardia Syndrome</li><li>POTS</li>
+    <li>Ischaemic Heart Disease</li><li>Myocardial Infarction</li><li>Coronary</li>
+    <li>Heart Attack</li><li>Ischaemia</li><li>Ischaemic</li><li>Angina</li><li>IHD</li>
+    <li>STEMI</li><li>NSTEMI</li><li>Congenital Heart Disease</li><li>Septal Defect</li>
+    <li>Patent Ductus Arteriosus</li><li>Tetralogy of Fallot</li>
+    <li>Transposition of the Great Arteries</li><li>Hypoplastic Left Heart Syndrome</li>
+    <li>Endocardial cushion defect</li><li>Congenital cardiac defect</li><li>Splenectomy</li>
+    <li>Spleen</li><li>Idiopathic Thrombocytopenic Purpura</li><li>Hereditary Spherocytosis</li>
+    <li>Autoimmune Haemolytic Anaemia</li><li>Myelofibrosis</li><li>Polycythemia</li>
+    <li>Dyslipidaemia</li><li>Dyslipidemia</li><li>Hypertriglyceridemia</li>
+    <li>Anaemi</li><li>Anemi</li><li>HIV</li><li>Human Immunodeficiency Virus</li>
+    <li>Acquired immunodeficiency syndrome</li><li>AIDS</li><li>Venous Thromboembolism</li>
+    <li>VTE</li><li>Deep Vein Thrombosis</li><li>DVT</li><li>Pulmonary Embolism</li>
+    <li>Cerebrovascular Accident</li><li>Transient Ischaemic Attack</li><li>Haemorrhagic</li>
+    <li>Stroke</li><li>Epilep</li><li>Seizure</li><li>Convulsion</li>
+    <li>Polycystic Kidney disease</li><li>Solitary kidney</li><li>Single functioning kidney</li>
+    <li>Nephrectomy</li><li>Unilateral kidney</li><li>Carcinoma</li><li>Type 1 diabetes</li>
+    <li>Inflammatory Bowel Disease</li><li>Cholangitis</li><li>Hypercalcaemia</li>
+  </ul>
+  <p class="warn">Many entries are partial words (depress, pregn, Thyroid, Rheum) — broad matching by design.</p></div>
+</details>
+
+<details open>
+  <summary><span class="pill pill-fail">R006</span> Medication · medication · 98 keywords</summary>
+  <div class="card"><ul class="keywords">
+    <li>gliclazide</li><li>glibenclamide</li><li>tolbutamide</li><li>sitagliptin</li>
+    <li>vildagliptin</li><li>linagliptin</li><li>pioglitazone</li><li>Diamicron</li><li>Daonil</li>
+    <li>Rastin</li><li>Actos</li><li>Januvia</li><li>Galvus</li><li>Trajent</li><li>Amiodarone</li>
+    <li>Carbamazepine</li><li>Ciclosporin</li><li>Clozapine</li><li>Digoxin</li><li>Fenfluramine</li>
+    <li>Lithium</li><li>Mycophenolate mofetil</li><li>methotrexate</li><li>Phenobarbital</li>
+    <li>Phenytoin</li><li>Somatrogon</li><li>Tacrolimus</li><li>Theophylline</li><li>Warfarin</li>
+    <li>GLP1</li><li>Mounjaro</li><li>Tirzepatide</li><li>Wegovy</li><li>Semaglutide</li>
+    <li>Ozempic</li><li>Rybelsus</li><li>Nevolat</li><li>Liraglutide</li><li>Adoport</li>
+    <li>Advagraf</li><li>Dailiport</li><li>Envarsus</li><li>Modigraf</li><li>Prograf</li>
+    <li>Tegretol</li><li>Curatil</li><li>Carbagen</li><li>Li-Liquid</li><li>Priadel</li>
+    <li>Camcolit</li><li>Liskonum</li><li>Repaglinide</li><li>Alogliptin</li><li>Vipidia</li>
+    <li>Ertugliflozin</li><li>Steglatro</li><li>Glipizide </li><li>Minodiab </li><li>Glimepiride </li>
+    <li>Janumet</li><li>Eucreas</li><li>Competact</li><li>Jentadueto</li><li>Komboglyze</li>
+    <li>Dilantin</li><li>Epanutin</li><li>Neoral</li><li>Capimune</li><li>Capsorin</li>
+    <li>Deximune</li><li>Vanquoral</li><li>Clozaril</li><li>Denzapine</li><li>Zaponex</li>
+    <li>CellCept</li><li>Myfenax</li><li>Cetava</li><li>Myfortic</li><li>Uniphyllin</li>
+    <li>Azathioprine</li><li>Acenocoumarol</li><li>ceptava</li><li>Orlistat</li><li>Mysimba</li>
+    <li>Pramlintide</li><li>Symlin</li><li>Ursodeoxycholic acid</li><li>Flecanide</li>
+    <li>Anticoagulant</li><li>Apixaban</li><li>Eliquis</li><li>Rivaroxaban</li><li>Xarelto</li>
+    <li>Dabigatran</li><li>Pradaxa</li><li>Edoxaban</li><li>Lixiana</li><li>Savaysa</li>
+  </ul></div>
+</details>
+
+<h2>What is NOT scanned today</h2>
+<ul>
+  <li>Individual SCR sections (Allergies, Diagnoses, etc.) are not parsed into structured fields for results — only flattened text keyword search + BMI table</li>
+  <li>NHS number / address from SCR banner are not shown on results (order page name/DOB used instead)</li>
+  <li>Medications list on results page is empty unless you add a parser (placeholder in code)</li>
+  <li>NHS portal “Search this Summary Care Record” box is not used — extension searches offline in extracted HTML</li>
+</ul>
+
+<h2>How to customise (quick guide)</h2>
+<table>
+  <tr><th>Goal</th><th>Edit</th></tr>
+  <tr><td>Add/remove a keyword</td><td><code>src/config/medexpress.rules.json</code></td></tr>
+  <tr><td>Add a new rule R007</td><td>New object in same JSON with <code>id</code>, <code>name</code>, <code>keywords</code>, <code>fail_if_found: true</code></td></tr>
+  <tr><td>Change order page selectors</td><td><code>main-page.js</code></td></tr>
+  <tr><td>Change NHS org check</td><td><code>config.js</code> → AUTH_TEXT / AUTH_ORG_CODE</td></tr>
+  <tr><td>Change results page look</td><td><code>src/ui/result.html</code> + <code>result.css</code></td></tr>
+  <tr><td>Stricter matching (whole words only)</td><td><code>src/engine/medexpressKeywordEngine.js</code> → <code>findKeywordMatches()</code></td></tr>
+</table>
+
+<h2>Rule JSON shape (for new rules)</h2>
+<pre><code>{
+  "id": "R007",
+  "name": "My new rule",
+  "category": "condition",
+  "keywords": ["keyword1", "partial*match"],
+  "fail_if_found": true,
+  "weight": 1
+}</code></pre>
+
+<p style="margin-top:40px;color:var(--muted);font-size:0.85rem">
+  EveryDayMeds SCR Pre-Screen · Source: <code>src/config/medexpress.rules.json</code> + engine source files
+</p>
+
+</div>
+</body>
+</html>

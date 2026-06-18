@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SCR Pre-Screen Results — EveryDayMeds</title>
+  <link rel="stylesheet" href="result.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div class="header__brand">
+        <h1>SCR Pre-Screen</h1>
+        <p class="header__subtitle">EveryDayMeds clinical decision support</p>
+      </div>
+      <div class="toolbar no-print">
+        <input type="search" id="filter-input" placeholder="Filter findings…" aria-label="Filter findings" />
+        <button type="button" id="btn-expand-all">Expand all</button>
+        <button type="button" id="btn-collapse-all">Collapse all</button>
+        <button type="button" id="btn-print">Print / Save PDF</button>
+      </div>
+    </header>
+
+    <section id="overall-result" class="overall-result" aria-label="Overall scan result" hidden>
+      <div id="overall-result-inner" class="overall-result__inner"></div>
+    </section>
+
+    <section id="patient-header" class="patient-band" aria-label="Patient details">
+      <p class="loading">Loading scan results…</p>
+    </section>
+
+    <main id="main-content">
+      <section id="rules-section" class="findings-section findings-section--rules" aria-label="Clinical keyword rules">
+        <h2>Clinical keyword rules (R001–R006)</h2>
+        <div id="rules-findings" class="findings-list"></div>
+      </section>
+
+      <section id="key-data-section" class="key-data-panel" aria-label="Key clinical data">
+        <h2>BMI &amp; vitals</h2>
+        <div id="key-data-grid" class="key-data-grid"></div>
+        <div id="medications-list" class="medications-list"></div>
+      </section>
+
+      <section id="supplementary-section" class="findings-section findings-section--info" aria-label="Supplementary extractors" hidden>
+        <h2>Supplementary extractors</h2>
+        <div id="supplementary-findings" class="findings-list"></div>
+      </section>
+    </main>
+
+    <footer class="disclaimer">
+      <p>
+        <strong>Disclaimer:</strong> This tool is a clinical decision-support aid only. Findings are
+        automatically extracted from the Summary Care Record and may be incomplete, outdated, or
+        mis-parsed. You must verify all findings against the full SCR and remain clinically
+        responsible for prescribing decisions. This scan does not approve or block any prescription.
+      </p>
+    </footer>
+  </div>
+  <script type="module" src="result.js"></script>
+</body>
+</html>
