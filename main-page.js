@@ -59,12 +59,103 @@
     dob = formatDobForNhs(dob);
 
     const gender = scrapeGender();
+    const address = scrapeAddress();
+    const vitals = scrapeHeightWeight();
 
     if (!firstName || !lastName || !dob) {
       return null;
     }
 
-    return { firstName, lastName, dateOfBirth: dob, gender };
+    return {
+      firstName,
+      lastName,
+      dateOfBirth: dob,
+      gender,
+      address,
+      height: vitals.height,
+      weight: vitals.weight,
+      bmi: vitals.bmi,
+      heightWeightDate: vitals.heightWeightDate,
+    };
+  }
+
+  function isEmptyVitalCell(text) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim();
+    return !t || t === '—' || t === '-' || t === '–';
+  }
+
+  function scrapeHeightWeight() {
+    const fromTable = scrapeBmiHistoryTable();
+    if (fromTable.height || fromTable.weight || fromTable.bmi) {
+      return fromTable;
+    }
+    return scrapeHeightWeightFallback();
+  }
+
+  function scrapeBmiHistoryTable() {
+    const result = { height: null, weight: null, bmi: null, heightWeightDate: null };
+    const table = document.querySelector('table.od2-bmi-table');
+    if (!table) return result;
+
+    const firstRow = table.querySelector('tbody tr');
+    if (!firstRow) return result;
+
+    const cells = firstRow.querySelectorAll('td');
+    if (cells.length < 4) return result;
+
+    const dateText = cells[0].textContent
+      .replace(/\s+/g, ' ')
+      .replace(/\b(Current|Start)\b/gi, '')
+      .trim();
+
+    const bmiRaw = cells[1]?.textContent?.trim();
+    const heightRaw = cells[2]?.textContent?.trim();
+    const weightRaw = cells[3]?.textContent?.trim();
+
+    if (dateText) result.heightWeightDate = dateText;
+    if (!isEmptyVitalCell(bmiRaw)) result.bmi = bmiRaw;
+    if (!isEmptyVitalCell(heightRaw)) result.height = heightRaw;
+    if (!isEmptyVitalCell(weightRaw)) result.weight = weightRaw;
+
+    return result;
+  }
+
+  function scrapeHeightWeightFallback() {
+    const result = { height: null, weight: null, bmi: null, heightWeightDate: null };
+
+    for (const stat of document.querySelectorAll('.od2-cons-stat')) {
+      const label = stat.querySelector('.cs-lbl')?.textContent?.trim().toLowerCase();
+      const value = stat.querySelector('.cs-val')?.textContent?.trim();
+      if (!label || !value || isEmptyVitalCell(value)) continue;
+      if (label === 'height') result.height = value;
+      if (label === 'current weight') result.weight = value;
+      if (label === 'current bmi') result.bmi = value;
+    }
+
+    if (result.height || result.weight) return result;
+
+    const grid = document.querySelector('.od2-vitals-grid');
+    if (!grid) return result;
+
+    for (const vital of grid.querySelectorAll('.od2-vital')) {
+      const label = vital.querySelector('.v-lbl')?.textContent?.trim().toLowerCase();
+      const value = vital.querySelector('.v-text')?.textContent?.trim();
+      if (!label || !value) continue;
+      if (label === 'height') result.height = value;
+      if (label === 'weight') result.weight = value;
+    }
+    return result;
+  }
+
+  function scrapeAddress() {
+    for (const row of document.querySelectorAll('.od2-meta-row')) {
+      const label = row.querySelector('.lbl');
+      const value = row.querySelector('.val');
+      if (!label || !value) continue;
+      if (label.textContent?.trim().toLowerCase() !== 'address') continue;
+      return value.textContent?.trim() || '';
+    }
+    return '';
   }
 
   function scrapeGender() {
@@ -104,6 +195,18 @@
     }
     if (userData.gender) {
       userData.gender = String(userData.gender).toLowerCase();
+    }
+    if (userData.height) {
+      userData.height = String(userData.height).trim();
+    }
+    if (userData.weight) {
+      userData.weight = String(userData.weight).trim();
+    }
+    if (userData.bmi) {
+      userData.bmi = String(userData.bmi).trim();
+    }
+    if (userData.heightWeightDate) {
+      userData.heightWeightDate = String(userData.heightWeightDate).trim();
     }
     return userData;
   }

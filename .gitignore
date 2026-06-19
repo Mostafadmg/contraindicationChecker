@@ -8,3 +8,8 @@ Thumbs.db
 web-ext-artifacts/
 *.zip
 .cursor/
+
+# Local MedExpress reference copy — not part of this extension release
+medexpress/
+medexpress SCR/
+**/medexpress SCR/
