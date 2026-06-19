@@ -1073,30 +1073,96 @@
       : raw;
   }
 
+  function getFindingCardsList() {
+    return document.querySelector('#root .sticky.top-4 .space-y-4');
+  }
+
+  function getFindingIndex(card) {
+    const list = getFindingCardsList();
+    if (!list) return null;
+    const cards = Array.from(list.querySelectorAll(':scope > .bg-red-50.cursor-pointer'));
+    const idx = cards.indexOf(card);
+    return idx >= 0 ? idx : null;
+  }
+
+  function getFindingMark(findingIndex) {
+    const root = document.querySelector('#root .prose') || document.getElementById('root');
+    return root?.querySelector(`#finding-${findingIndex}`) || null;
+  }
+
+  function getDateFromFindingMark(findingIndex) {
+    const mark = getFindingMark(findingIndex);
+    if (!mark) return null;
+
+    let row = mark.closest('tr');
+    while (row) {
+      const firstCell = row.querySelector('td:first-child');
+      if (firstCell?.classList.contains('scr-table__cell--spacer')) {
+        row = row.previousElementSibling;
+        continue;
+      }
+      const dateText = firstCell?.querySelector('p')?.textContent?.trim();
+      if (dateText && dateText !== '—') return dateText;
+      break;
+    }
+    return null;
+  }
+
+  function clearFindingRowHighlights() {
+    document.querySelectorAll('#root tr.edm-finding-row-active').forEach((row) => {
+      row.classList.remove('edm-finding-row-active');
+    });
+  }
+
+  function highlightFindingRow(findingIndex) {
+    clearFindingRowHighlights();
+    const row = getFindingMark(findingIndex)?.closest('tr');
+    if (row) row.classList.add('edm-finding-row-active');
+  }
+
   function compactFindingCardExcerpt(card) {
-    const excerptBox = card.querySelector('.bg-white.border.rounded.p-3');
-    if (!excerptBox) return;
+    card.querySelector('.bg-white.border.rounded.p-3')?.remove();
+  }
 
-    const snippetEl = excerptBox.querySelector('p.text-sm.text-slate-800.italic, p.italic');
-    const snippet = snippetEl?.textContent?.replace(/^[\s"]+|[\s"]+$/g, '').trim() || '';
-    const title = card.querySelector('h4')?.textContent?.trim() || '';
+  function syncFindingCardDate(card) {
+    const findingIndex = getFindingIndex(card);
+    let dateRaw = findingIndex != null ? getDateFromFindingMark(findingIndex) : null;
 
-    const dateRaw = pickFindingDate(extractDatesFromSnippet(snippet), title, snippet);
-    excerptBox.remove();
+    if (!dateRaw) {
+      const excerptBox = card.querySelector('.bg-white.border.rounded.p-3');
+      const snippetEl = excerptBox?.querySelector('p.text-sm.text-slate-800.italic, p.italic');
+      const snippet = snippetEl?.textContent?.replace(/^[\s"]+|[\s"]+$/g, '').trim() || '';
+      const titleEl = card.querySelector('h4');
+      const title = titleEl?.querySelector('.edm-finding-date')
+        ? card.dataset.edmFindingTitle || ''
+        : titleEl?.textContent?.trim() || '';
+      dateRaw = pickFindingDate(extractDatesFromSnippet(snippet), title, snippet);
+    }
 
-    if (!dateRaw || card.querySelector('.edm-finding-date')) return;
+    if (!dateRaw) return;
 
     const titleEl = card.querySelector('h4');
     if (!titleEl) return;
 
-    const dateEl = document.createElement('span');
-    dateEl.className = 'edm-finding-date';
+    if (!card.dataset.edmFindingTitle) {
+      const existingDate = titleEl.querySelector('.edm-finding-date');
+      card.dataset.edmFindingTitle = existingDate
+        ? titleEl.textContent.replace(existingDate.textContent, '').replace(/\s·\s?$/, '').trim()
+        : titleEl.textContent.trim();
+    }
+
+    let dateEl = titleEl.querySelector('.edm-finding-date');
+    if (!dateEl) {
+      dateEl = document.createElement('span');
+      dateEl.className = 'edm-finding-date';
+      titleEl.appendChild(dateEl);
+    }
     dateEl.textContent = formatFindingDate(dateRaw);
-    titleEl.appendChild(dateEl);
   }
 
   function enhanceFindingCards() {
     document.querySelectorAll('#root .sticky.top-4 .bg-red-50.cursor-pointer').forEach((card) => {
+      syncFindingCardDate(card);
       compactFindingCardExcerpt(card);
 
       if (card.dataset.edmFindingCard === '1') return;
@@ -1112,12 +1178,31 @@
         card.classList.add('edm-finding-card--active');
       };
 
-      card.addEventListener('click', activate);
+      card.addEventListener('click', () => {
+        activate();
+        const idx = getFindingIndex(card);
+        if (idx == null) return;
+        setTimeout(() => highlightFindingRow(idx), 450);
+      });
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           card.click();
         }
+      });
+    });
+  }
+
+  function enhanceFindingMarks() {
+    const root = document.querySelector('#root .prose');
+    if (!root) return;
+
+    root.querySelectorAll('mark[id^="finding-"]').forEach((mark) => {
+      if (mark.dataset.edmMarkBound === '1') return;
+      mark.dataset.edmMarkBound = '1';
+      mark.addEventListener('click', () => {
+        const idx = parseInt(mark.id.replace('finding-', ''), 10);
+        if (!Number.isNaN(idx)) highlightFindingRow(idx);
       });
     });
   }
@@ -1133,6 +1218,7 @@
       enhanceScrCardHeader();
       enhanceVitalsCompare();
       enhanceFindingCards();
+      enhanceFindingMarks();
 
       document.querySelectorAll('#root .prose').forEach(enhanceScrSearch);
     });

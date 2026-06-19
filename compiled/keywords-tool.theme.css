@@ -1152,6 +1152,19 @@ body {
   font-size: 0.6875rem !important;
 }
 
+#root tr.edm-finding-row-active {
+  background: #fee2e2 !important;
+  box-shadow: inset 0 0 0 2px #ef4444;
+}
+
+#root tr.edm-finding-row-active td {
+  background: transparent !important;
+}
+
+#root tr.edm-finding-row-active mark[id^="finding-"] {
+  background-color: #fecaca !important;
+}
+
 #root .text-red-800 {
   color: var(--edm-fail) !important;
 }
