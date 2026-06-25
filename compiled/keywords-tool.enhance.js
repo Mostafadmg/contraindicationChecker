@@ -48,6 +48,8 @@
     jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
   };
 
+  const NAV_ICON_VERSION = '2';
+
   const ICONS = {
     search:
       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
@@ -60,7 +62,7 @@
     repeatMeds:
       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
     discontinuedMeds:
-      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="14" height="6" rx="3"/><path d="M9 12h6"/></svg>',
+      '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-4a2.2 2.2 0 0 0 2.7-2.7l-4-10a2.2 2.2 0 0 0-4.2 0l-4 10a2.2 2.2 0 0 0 2.7 2.7z"/><path d="m14 10-4 4"/><path d="m10 10 4 4"/></svg>',
     diagnosis:
       '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>',
     problems:
@@ -241,13 +243,16 @@
     nav.querySelectorAll('ul button').forEach((btn) => {
       const full = (btn.dataset.edmNavTitle || btn.textContent).trim();
       const expectedKey = iconKey(full);
-      if (btn.dataset.edmNavItem === '1' && btn.dataset.edmNavIconKey === (expectedKey || '')) {
+      if (btn.dataset.edmNavItem === '1'
+        && btn.dataset.edmNavIconKey === (expectedKey || '')
+        && btn.dataset.edmNavIconVer === NAV_ICON_VERSION) {
         return;
       }
 
       btn.dataset.edmNavItem = '1';
       btn.dataset.edmNavTitle = full;
       btn.dataset.edmNavIconKey = expectedKey || '';
+      btn.dataset.edmNavIconVer = NAV_ICON_VERSION;
       btn.classList.remove('break-words', 'text-blue-700');
       btn.classList.add('edm-nav-item');
       if (expectedKey) {
@@ -1067,10 +1072,54 @@
 
   function formatFindingDate(raw) {
     if (!raw) return null;
-    const parsed = parseObservationDate(raw);
-    return parsed && !Number.isNaN(parsed.getTime())
+    const entered = /^entered\s*:/i.test(raw);
+    const prescribed = /^prescribed\s*:/i.test(raw);
+    const lastIssued = /^last issued\s*:/i.test(raw);
+    const authorised = /^authorised/i.test(raw);
+    const cleaned = raw
+      .replace(/^(entered|prescribed|last issued|authorised(?:\s*\([^)]*\))?)\s*:\s*/i, '')
+      .trim();
+    const parsed = parseObservationDate(cleaned);
+    const formatted = parsed && !Number.isNaN(parsed.getTime())
       ? formatObservationDate(parsed)
-      : raw;
+      : cleaned;
+    if (entered) return `Entered ${formatted}`;
+    if (prescribed) return `Prescribed ${formatted}`;
+    if (lastIssued) return `Last issued ${formatted}`;
+    if (authorised) return `Authorised ${formatted}`;
+    return formatted;
+  }
+
+  function getMedicationRowForMark(mark) {
+    if (!mark) return null;
+    const row = mark.closest('tr');
+    if (!row) return null;
+    if (!mark.closest('.scr-supporting-inset')) return row;
+
+    let prev = row.previousElementSibling;
+    while (prev) {
+      const first = prev.querySelector('td:first-child');
+      if (first && !first.classList.contains('scr-table__cell--spacer')) return prev;
+      prev = prev.previousElementSibling;
+    }
+    return row;
+  }
+
+  function getDateTextFromScrRow(row) {
+    if (!row) return null;
+
+    const cells = Array.from(row.querySelectorAll('td.scr-table__cell:not(.scr-table__cell--spacer)'));
+    for (const cell of cells) {
+      const text = cell.querySelector('p')?.textContent?.trim() || '';
+      if (/^(entered|prescribed|last issued|authorised)/i.test(text)) return text;
+    }
+
+    if (cells.length >= 2) {
+      const dateText = cells[1].querySelector('p')?.textContent?.trim() || '';
+      if (dateText && dateText !== '—' && /\d/.test(dateText)) return dateText;
+    }
+
+    return null;
   }
 
   function getFindingCardsList() {
@@ -1093,19 +1142,7 @@
   function getDateFromFindingMark(findingIndex) {
     const mark = getFindingMark(findingIndex);
     if (!mark) return null;
-
-    let row = mark.closest('tr');
-    while (row) {
-      const firstCell = row.querySelector('td:first-child');
-      if (firstCell?.classList.contains('scr-table__cell--spacer')) {
-        row = row.previousElementSibling;
-        continue;
-      }
-      const dateText = firstCell?.querySelector('p')?.textContent?.trim();
-      if (dateText && dateText !== '—') return dateText;
-      break;
-    }
-    return null;
+    return getDateTextFromScrRow(getMedicationRowForMark(mark));
   }
 
   function clearFindingRowHighlights() {
@@ -1121,10 +1158,18 @@
   }
 
   function compactFindingCardExcerpt(card) {
-    card.querySelector('.bg-white.border.rounded.p-3')?.remove();
+    const excerptBox = card.querySelector('.bg-white.border.rounded.p-3');
+    if (!excerptBox) return;
+
+    const snippetEl = excerptBox.querySelector('p.text-sm.text-slate-800.italic, p.italic');
+    const snippet = snippetEl?.textContent?.replace(/^[\s"]+|[\s"]+$/g, '').trim() || '';
+    if (snippet) card.dataset.edmSnippet = snippet;
+
+    excerptBox.remove();
   }
 
   function syncFindingCardDate(card) {
+    const titleEl = card.querySelector('h4');
     const findingIndex = getFindingIndex(card);
     let dateRaw = findingIndex != null ? getDateFromFindingMark(findingIndex) : null;
 
@@ -1132,23 +1177,28 @@
       const excerptBox = card.querySelector('.bg-white.border.rounded.p-3');
       const snippetEl = excerptBox?.querySelector('p.text-sm.text-slate-800.italic, p.italic');
       const snippet = snippetEl?.textContent?.replace(/^[\s"]+|[\s"]+$/g, '').trim() || '';
-      const titleEl = card.querySelector('h4');
-      const title = titleEl?.querySelector('.edm-finding-date')
-        ? card.dataset.edmFindingTitle || ''
-        : titleEl?.textContent?.trim() || '';
+      const titleClone = titleEl?.cloneNode(true);
+      titleClone?.querySelector('.edm-finding-date')?.remove();
+      const title = titleClone?.textContent?.trim() || '';
       dateRaw = pickFindingDate(extractDatesFromSnippet(snippet), title, snippet);
     }
 
-    if (!dateRaw) return;
+    if (!dateRaw) {
+      titleEl?.querySelector('.edm-finding-date')?.remove();
+      return;
+    }
 
-    const titleEl = card.querySelector('h4');
+    if (!/\d/.test(dateRaw) && !/^(entered|prescribed|last issued|authorised)/i.test(dateRaw)) {
+      titleEl?.querySelector('.edm-finding-date')?.remove();
+      return;
+    }
+
     if (!titleEl) return;
 
     if (!card.dataset.edmFindingTitle) {
-      const existingDate = titleEl.querySelector('.edm-finding-date');
-      card.dataset.edmFindingTitle = existingDate
-        ? titleEl.textContent.replace(existingDate.textContent, '').replace(/\s·\s?$/, '').trim()
-        : titleEl.textContent.trim();
+      const titleClone = titleEl.cloneNode(true);
+      titleClone.querySelector('.edm-finding-date')?.remove();
+      card.dataset.edmFindingTitle = titleClone.textContent.trim();
     }
 
     let dateEl = titleEl.querySelector('.edm-finding-date');
@@ -1215,6 +1265,9 @@
       if (nav) enhanceNav(nav);
 
       enhanceAppHeader();
+      if (typeof window.edmEnhanceKeywordsReference === 'function') {
+        window.edmEnhanceKeywordsReference();
+      }
       enhanceScrCardHeader();
       enhanceVitalsCompare();
       enhanceFindingCards();

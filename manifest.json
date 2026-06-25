@@ -4,7 +4,7 @@
 
   "name": "EveryDayMeds SCR Pre-Screen",
 
-  "version": "2.0.24",
+  "version": "2.0.25",
 
   "description": "Automates NHS SCR navigation and presents a clinical pre-screen summary for prescribers.",
 
@@ -56,7 +56,7 @@
 
     {
 
-      "resources": ["compiled/*", "src/ui/*", "src/config/medexpress.rules.json"],
+      "resources": ["compiled/*", "compiled/advice/*", "src/ui/*", "src/config/medexpress.rules.json", "src/config/r005-keyword-groups.json"],
 
       "matches": ["<all_urls>"]
 

@@ -1,0 +1,230 @@
+[
+  {
+    "id": "kidney",
+    "label": "Kidney / Renal",
+    "keywords": [
+      "Chronic Kidney Disease stage 4",
+      "Chronic Kidney Disease, stage 4",
+      "Chronic Kidney Disease stage 5",
+      "Chronic Kidney Disease, stage 5",
+      "Chronic Kidney Disease",
+      "eGFR",
+      "Polycystic Kidney disease",
+      "Solitary kidney",
+      "Single functioning kidney",
+      "Nephrectomy",
+      "Unilateral kidney",
+      "Hypercalcaemia"
+    ]
+  },
+  {
+    "id": "oncology",
+    "label": "Oncology / Cancer",
+    "keywords": [
+      "cancer",
+      "oncology",
+      "chemotherapy",
+      "radiotherapy",
+      "tamoxifen",
+      "Zoladex",
+      "MEN2",
+      "breast cancer",
+      "Malignant",
+      "Lymphoma",
+      "Medullary",
+      "Neoplas",
+      "Leukaemia",
+      "Sarcoma",
+      "Phyllodes",
+      "Carcinoma"
+    ]
+  },
+  {
+    "id": "bariatric",
+    "label": "Bariatric / Gastric surgery",
+    "keywords": [
+      "Bariatric",
+      "Sleeve gastrectomy",
+      "gastric sleeve",
+      "Gastric bypass",
+      "Roux-en-Y",
+      "Gastric balloon",
+      "Endoscopic sleeve gastroplasty",
+      "Biliopancreatic diversion",
+      "duodenal bypass",
+      "Gastric band"
+    ]
+  },
+  {
+    "id": "endocrine",
+    "label": "Endocrine / Hormonal",
+    "keywords": [
+      "Addison",
+      "Cushing",
+      "Graves",
+      "Congenital Adrenal Hyperplasia",
+      "Acromegaly",
+      "Overactive thyroid",
+      "Growth Hormone Disorder",
+      "Thyroid",
+      "Adrenal",
+      "Pituitar",
+      "Prolactin",
+      "Hypoglycaemia",
+      "Type 1 diabetes"
+    ]
+  },
+  {
+    "id": "gi-liver",
+    "label": "GI / Liver / Pancreas",
+    "keywords": [
+      "Ulcerative Colitis",
+      "Crohn",
+      "Cirrhosis",
+      "Gastroparesis",
+      "Cholelithiasis",
+      "Cholecystitis",
+      "pancreatic insufficiency",
+      "colectomy",
+      "ostomy",
+      "End stage liver disease",
+      "chronic malabsorption",
+      "Inflammatory Bowel Disease",
+      "Cholangitis"
+    ]
+  },
+  {
+    "id": "mental-health",
+    "label": "Mental health / Substance use",
+    "keywords": [
+      "Alcohol dependence",
+      "Alcohol abuse",
+      "Suicid",
+      "anxiety",
+      "depress",
+      "Cognitive impairment",
+      "Overdose",
+      "Intention Harm",
+      "Dementia"
+    ]
+  },
+  {
+    "id": "cardiovascular",
+    "label": "Cardiovascular",
+    "keywords": [
+      "Heart Failure",
+      "NYHA",
+      "Long QT syndrome",
+      "Atrial fibrillation",
+      "AFib",
+      "Supraventricular Tachycardia",
+      "SVT",
+      "Heart Block",
+      "Atrioventricular Block",
+      "Pacemaker",
+      "Defibrillator",
+      "Cardiomyopathy",
+      "Postural Orthostatic Tachycardia Syndrome",
+      "POTS",
+      "Ischaemic Heart Disease",
+      "Myocardial Infarction",
+      "Coronary",
+      "Heart Attack",
+      "Ischaemia",
+      "Ischaemic",
+      "Angina",
+      "IHD",
+      "STEMI",
+      "NSTEMI",
+      "Congenital Heart Disease",
+      "Septal Defect",
+      "Patent Ductus Arteriosus",
+      "Tetralogy of Fallot",
+      "Transposition of the Great Arteries",
+      "Hypoplastic Left Heart Syndrome",
+      "Endocardial cushion defect",
+      "Congenital cardiac defect"
+    ]
+  },
+  {
+    "id": "rheumatology",
+    "label": "Rheumatology / Autoimmune",
+    "keywords": [
+      "Rheumatoid",
+      "Rheum",
+      "Lupus",
+      "Multiple Sclerosis",
+      "Seropositive",
+      "Seronegative",
+      "Autoimmune connective tissue"
+    ]
+  },
+  {
+    "id": "haematology",
+    "label": "Haematology / Spleen",
+    "keywords": [
+      "sickle cell",
+      "Splenectomy",
+      "Spleen",
+      "Idiopathic Thrombocytopenic Purpura",
+      "Hereditary Spherocytosis",
+      "Autoimmune Haemolytic Anaemia",
+      "Myelofibrosis",
+      "Polycythemia",
+      "Dyslipidaemia",
+      "Dyslipidemia",
+      "Hypertriglyceridemia",
+      "Anaemi",
+      "Anemi"
+    ]
+  },
+  {
+    "id": "neurology",
+    "label": "Neurology / Stroke",
+    "keywords": [
+      "Non arteritic ischaemic optic neuropathy",
+      "Cerebrovascular Accident",
+      "Transient Ischaemic Attack",
+      "Haemorrhagic",
+      "Stroke",
+      "Epilep",
+      "Seizure",
+      "Convulsion"
+    ]
+  },
+  {
+    "id": "infectious",
+    "label": "Infectious disease",
+    "keywords": [
+      "HIV",
+      "Human Immunodeficiency Virus",
+      "Acquired immunodeficiency syndrome",
+      "AIDS"
+    ]
+  },
+  {
+    "id": "thrombosis",
+    "label": "Thrombosis / VTE",
+    "keywords": [
+      "Venous Thromboembolism",
+      "VTE",
+      "Deep Vein Thrombosis",
+      "DVT",
+      "Pulmonary Embolism"
+    ]
+  },
+  {
+    "id": "musculoskeletal",
+    "label": "Musculoskeletal",
+    "keywords": [
+      "myopathy"
+    ]
+  },
+  {
+    "id": "pregnancy",
+    "label": "Pregnancy",
+    "keywords": [
+      "pregn"
+    ]
+  }
+]
