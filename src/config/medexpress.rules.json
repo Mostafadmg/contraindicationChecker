@@ -121,6 +121,9 @@
       "Acenocoumarol",
       "ceptava",
       "Orlistat",
+      "orlistat",
+      "Xenical",
+      "Alli",
       "Mysimba",
       "Pramlintide",
       "Symlin",
@@ -142,9 +145,7 @@
       "Forxiga",
       "canagliflozin",
       "Invokana",
-      "Trajenta",
-      "Xenical",
-      "Alli"
+      "Trajenta"
     ],
     "fail_if_found": true,
     "weight": 1

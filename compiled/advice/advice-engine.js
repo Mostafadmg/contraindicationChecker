@@ -8,7 +8,7 @@
  */
 (function () {
   const REGISTRY = window.EDM_ADVICE_REGISTRY || {
-    matchOrder: ['time-sensitive', 'clinical-details', 'medications-absolute', 'patient-assessment', 'conditions'],
+    matchOrder: ['medications-absolute', 'time-sensitive', 'clinical-details', 'patient-assessment', 'conditions'],
   };
   const RULES = window.EDM_ADVICE_RULES || {};
 
@@ -1277,6 +1277,13 @@
 
     const btn = card.querySelector('.edm-advice-btn');
     btn?.classList.remove('edm-advice-btn--caution', 'edm-advice-btn--clinical', 'edm-advice-btn--patient');
+
+    const absMed = matchMedicationsAbsolute(ctx);
+    if (absMed) {
+      card.classList.add('edm-finding-card--time-reject');
+      card.dataset.edmAdviceCategory = 'absolute-med';
+      return;
+    }
 
     const ts = matchTimeSensitive(ctx);
     if (ts) {

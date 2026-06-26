@@ -7,9 +7,9 @@
 window.EDM_ADVICE_REGISTRY = {
   /** First matching rule type wins. */
   matchOrder: [
+    'medications-absolute',
     'time-sensitive',
     'clinical-details',
-    'medications-absolute',
     'patient-assessment',
     'conditions',
   ],
